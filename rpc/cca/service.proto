@@ -77,6 +77,9 @@ service Files {
 
   // Method to call at an interval to check status of downloadable image
   rpc GetDownloadStatus(GetDownloadStatusReq) returns (GetDownloadStatusRes);
+
+  // Method to view
+  rpc CreateView(CreateViewReq) returns (CreateViewRes);
 }
 
 // Tools service exposes some "tool"-like methods
@@ -90,6 +93,15 @@ service Tools {
 
   // Validate NavigaDoc document JSON against JSON schema
   rpc ValidateNavigaDoc(ValidateDocumentReq) returns (ValidateDocumentRes);
+}
+
+message CreateViewReq {
+  string UUID = 1;  // required Document UUID
+  string repository = 2;  // The repository we're reading from, defaults to "editorial".
+}
+
+message CreateViewRes {
+  string url = 1;
 }
 
 message DeleteDocumentReq {

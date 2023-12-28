@@ -67,7 +67,7 @@ func TestUpload__Filesystem(t *testing.T) {
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(res)
 
-	metadataArt := res.GetArtifact("metadata")
+	metadataArt := res.GetArtifact("navigadoc")
 	if metadataArt == nil {
 		t.Fatalf("no metadata extracted from upload: %v", err)
 
@@ -82,7 +82,7 @@ func TestUpload__Filesystem(t *testing.T) {
 		t.Fatalf("failed to get extracted metadata: %v", err)
 	}
 
-	os.Stderr.Write(meta.Content)
+	_, _ = os.Stderr.Write(meta.Content)
 }
 
 func TestUpload__Remote(t *testing.T) {
