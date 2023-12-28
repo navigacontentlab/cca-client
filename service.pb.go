@@ -7,7 +7,7 @@
 package cca
 
 import (
-	rpc "bitbucket.org/infomaker/doc-format/v2/rpc"
+	rpc "github.com/navigacontentlab/navigadoc/rpc"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
