@@ -1,0 +1,87 @@
+# all available settings of specific linters
+run:
+  skip-dirs:
+    - cmd/docs
+
+linters-settings:
+  funlen:
+    lines: 120
+    statements: 100
+  tagliatelle:
+    case:
+      rules:
+        avro: snake
+        bson: snake
+        json: snake
+        mapstructure: kebab
+        xml: camel
+        yaml: snake
+
+linters:
+  enable:
+    - bodyclose
+    - cyclop
+    - dogsled
+    - dupl
+    - errcheck
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - funlen
+    - gci
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - gofmt
+    - goheader
+    - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - ireturn
+    - lll
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilnil
+    - nlreturn
+    - nolintlint
+    - predeclared
+    - promlinter
+    - revive
+    - rowserrcheck
+    - staticcheck
+    - stylecheck
+    - tagliatelle
+    - tenv
+    - testpackage
+    - thelper
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    - wsl
+
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Not a credential, we're good
+    - path: example_test\.go
+      linters:
+        - gosec
+      text: G101
+      source: tokenEndpoint

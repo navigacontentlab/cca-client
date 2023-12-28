@@ -1,0 +1,320 @@
+syntax = "proto3";
+
+package cca;
+option go_package = "github.com/navigacontentlab/cca/rpc/cca";
+import "rpc/document.proto";
+
+/*
+    Document service is at your service when managing documents
+
+    In this documentation when we reference to naviga.Document or Document we ha refering to
+    [Naviga Doc Format](https://docs.navigaglobal.com/navigadoc/)
+
+*/
+service Documents {
+/*
+    WriteDocument is the method you would want to use when creating or updating documents.
+
+    The method also contains functionality to handle optimistic locking. To use this you need to pass lockingMode and expectedRevision parameters.
+*/
+rpc WriteDocument(WriteDocumentReq) returns (WriteDocumentRes);
+
+  // DeleteDocument deletes a document from repository.
+  rpc DeleteDocument(DeleteDocumentReq) returns (DeleteDocumentRes);
+
+  // Get document retreives a document from content repo
+  rpc GetDocument(GetDocumentReq) returns (GetDocumentRes);
+
+  // Method to check weather a document exists, Is cheaper to use than GetDocument
+  rpc DocumentExists(DocumentExistsReq) returns (DocumentExistsRes);
+}
+
+service NewsMLDocuments {
+  rpc WriteNewsMLDocument(WriteNewsMLDocumentReq) returns (WriteNewsMLDocumentRes);
+  rpc DeleteNewsMLDocument(DeleteDocumentReq) returns (DeleteDocumentRes);
+  rpc GetNewsMLDocument(GetDocumentReq) returns (GetNewsMLDocumentRes);
+  rpc NewsMLDocumentExists(DocumentExistsReq) returns (DocumentExistsRes);
+}
+
+message WriteNewsMLDocumentReq {
+  string uploadId = 1;
+  string unit = 2; // required
+  string newsml = 3; // required
+  string expectedRevision = 4;
+  LockingMode lockingMode = 5;
+  repeated FeatureFlag features = 6;
+  string repository = 7; // The repository we're writing to, defaults to "editorial".
+}
+
+message WriteNewsMLDocumentRes {
+  string newsml = 1;
+  string revision = 2;
+  int64 version = 3;
+}
+
+message GetNewsMLDocumentRes {
+  string newsml = 3; // required
+  string revision = 4;
+  int64 version = 5;
+  string repository = 6; // The repository we're reading from, defaults to "editorial".
+}
+
+/*
+    Files service should be used primarily when uploading or downloading files.
+*/
+service Files {
+  // Method to call at an interval to check status of an ongoing upload
+  rpc GetStatus(GetStatusReq) returns (GetStatusRes);
+
+  // Method returns content (as base64 encoded) from artifact file.
+  rpc GetArtifact(GetArtifactReq) returns (GetArtifactRes);
+
+  // Initiate a new upload.
+  rpc CreateUpload(CreateUploadReq) returns (CreateUploadRes);
+
+  // Initiate a new download
+  rpc CreateDownload(CreateDownloadReq) returns (CreateDownloadRes);
+
+  // Method to call at an interval to check status of downloadable image
+  rpc GetDownloadStatus(GetDownloadStatusReq) returns (GetDownloadStatusRes);
+}
+
+// Tools service exposes some "tool"-like methods
+service Tools {
+
+  // Method to convert NewsML to Document
+  rpc ConvertToDocument(ConvertToDocumentReq) returns (ConvertToDocumentRes);
+
+  // Convert Document to NewsML
+  rpc ConvertToNewsml(ConvertToNewsmlReq) returns (ConvertToNewsmlRes);
+
+  // Validate NavigaDoc document JSON against JSON schema
+  rpc ValidateNavigaDoc(ValidateDocumentReq) returns (ValidateDocumentRes);
+}
+
+message DeleteDocumentReq {
+  string UUID = 1; // required The UUID of the document that will be removed
+  string unit = 2; // required Under which unit are you performing this action
+  string repository = 3; // The repository we're deleting from, defaults to "editorial".
+}
+
+message DeleteDocumentRes {
+  bool deleted = 1;
+}
+
+message DocumentExistsReq {
+  string UUID = 1; // required UUID of the document
+  string unit = 2; // required Under which unit are you performing this action
+  string repository = 3; // The repository we're performing the check against, defaults to "editorial".
+}
+
+message DocumentExistsRes {
+  bool exists = 1;
+}
+
+message ConvertToDocumentReq {
+  string newsml = 1; // required Full XML NewsML based document
+}
+
+message ConvertToDocumentRes {
+  naviga.Document document = 1;
+}
+
+message ConvertToNewsmlReq {
+  naviga.Document document = 1; // required A Naviga Doc in JSON
+}
+
+message ConvertToNewsmlRes {
+  string newsml = 1; // Document as NewsML
+}
+
+message GetStatusReq {
+  string uploadId = 1; // required The uploadId (Received when an upload is started)
+}
+
+message GetStatusRes {
+  ProcessingStatus status = 1; // Current status of upload (See "enums")
+  Manifest manifest = 2;
+  string message = 3;
+}
+
+message GetArtifactReq {
+  string uploadId = 1; // required The uploadid (Received when an upload is started)
+  string name = 2; // required Name of the file
+}
+
+message GetArtifactRes {
+  bytes content = 1; // Content as a BASE64 encoded string
+}
+
+message Manifest {
+  string uuid = 1;
+  string hashedFilename = 2;
+  string error = 3;
+  string uri = 4;
+  string contentClass = 5;
+  repeated Artifact artifacts = 6;
+  string warning = 7;
+  string unit = 8;
+  string repository = 9;
+}
+
+message Artifact {
+  string type = 1;
+  string name = 2;
+  string mimeType = 3;
+  string value = 4;
+}
+
+enum ProcessingStatus {
+  UNKNOWN = 0;
+  IN_PROGRESS = 1;
+  DONE = 2;
+  ERROR = 3;
+  ASSET_EXISTS = 4;
+}
+
+/*
+    Locking mode is passed as a parameter when saving documents
+*/
+enum LockingMode {
+  NONE = 0;
+  OPTIMISTIC_LOCKING = 1;
+  PESSIMISTIC_LOCKING = 2;
+}
+
+message WriteDocumentReq {
+  string uploadId = 1;
+  string unit = 2; // required
+  naviga.Document document = 3; // required
+  string expectedRevision = 4; // When lockingMode is used expected revision should also be posted
+  LockingMode lockingMode = 5; // Enum to enable certain locking mode when saving documents (See "Enums")
+
+  repeated FeatureFlag features = 6;
+  string repository = 7; // The repository we're writing to, defaults to "editorial".
+}
+
+message FeatureFlag {
+  string name = 1;
+  string value = 2;
+}
+
+message WriteDocumentRes {
+  naviga.Document document = 1;
+  string revision = 2;
+  int64 version = 3;
+}
+
+message GetDocumentReq {
+  string UUID = 1; // required Document UUID
+  int64 version = 2;
+  string repository = 3; // The repository we're reading from, defaults to "editorial".
+}
+
+message GetDocumentRes {
+  naviga.Document document = 3; // required
+  string revision = 4;
+  int64 version = 5;
+}
+
+message CreateUploadReq {
+  string filename = 1;
+  string unit = 2;
+  string repository = 3; // The repository we're uploading to, defaults to "editorial".
+}
+
+message CreateUploadRes {
+  string uploadId = 1;
+  string uploadUrl = 2;
+}
+
+/*
+    DownloadType can be passed as a parameter when downloading assets
+*/
+enum DownloadType {
+  TYPE_UNKNOWN = 0;
+  TYPE_ORIGINAL = 1;
+  TYPE_PRESENTATION = 2;
+}
+
+message CreateDownloadReq {
+  string UUID = 1; // required UUID of document
+  DownloadType type = 2; // optional with value 'original' or 'presentation', see DownloadType enum
+  string repository = 3; // The repository we're downloading from, defaults to "editorial".
+}
+
+message CreateDownloadRes {
+  string downloadId = 1;
+  Manifest manifest = 2; // optional, used when type is supplied in CreateDownloadReq
+}
+
+message GetDownloadStatusReq {
+  string downloadId = 1; // required ID of the requested download
+}
+
+message GetDownloadStatusRes {
+  ProcessingStatus status = 1;
+  Manifest manifest = 2;
+  string message = 3;
+}
+
+/*
+    Lookup service should be used when objects UUIDs with same as URI or external UUID needs to be found
+*/
+
+service LookUp {
+   rpc GetSameAsUris(SameAsUrisReq) returns (SameAsUrisRes);
+   rpc GetExternalUuids(ExternalUuidsReq) returns (ExternalUuidsRes);
+}
+
+message SameAsUrisReq {
+    repeated string sameAsUris = 1; // list of URIs to lookup documents with SameAsURIs property
+    int64 start = 3; // an offset of the result set
+    int64 limit = 4; // the maximum number of hits in the response
+    bool includeDocument = 5;  // if documents should be included in result
+    string repository = 6; // The repository doing the lookup against, defaults to "editorial".
+}
+
+message ExternalUuidsReq {
+    repeated string externalUuids = 1; // list of UUIDs to lookup documents with ExternalUUIU property
+    int64 start = 2; // an offset of the result set
+    int64 limit = 3; // the maximum number of hits in the response
+    bool includeDocument = 4;  // if documents should be included in result
+    string repository = 5; // The repository doing the lookup against, defaults to "editorial".
+}
+
+message SameAsUrisHit {
+    string uuid = 1; // uuid of the document
+    repeated string sameAsURIs = 2; // list of URI for the SameAs property
+    naviga.Document document = 3; // full Naviga document
+    string error = 4; // if an error occurs fetching the document the error message
+}
+
+message SameAsUrisRes {
+  int64 includedHits = 1; // the number of hits in the response
+  int64 totalHits = 2; // the total number of hits
+  repeated SameAsUrisHit  hits = 3; // list with the included hits in the response
+}
+
+message ExternalUuidsHit {
+    string uuid = 1; // uuid of the document
+    string externalUUID = 2; // the external UUID property value
+    string externalURI = 3; // the external URI property value
+    string externalVersion = 4; // the external version property value
+    naviga.Document document = 5; // full Naviga document
+    string error = 7; // if an error occurs fetching the document the error message
+}
+
+message ExternalUuidsRes {
+  int64 includedHits = 1; // the number of hits in the response
+  int64 totalHits = 2; // the total number of hits
+  repeated ExternalUuidsHit  hits = 3; // list with the included hits in the response
+}
+
+message ValidateDocumentReq {
+  naviga.Document document = 1;
+}
+
+message ValidateDocumentRes {
+  repeated string schemaErrors = 1;
+}
